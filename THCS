@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cổng Thông Tin Điện Tử & Hệ Thống Quản Trị</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandBlue: 'var(--color-brand-blue, #004b87)', 
+                        brandRed: 'var(--color-brand-red, #b91c1c)',  
+                        linkBlue: 'var(--color-brand-blue, #055699)',   
+                        bgGray: '#f8fafc',
+                        bgOffWhite: '#fafafa', 
+                    },
+                    fontFamily: {
+                        sans: ['Roboto', 'Arial', 'sans-serif'], // Font mặc định cho frontend
+                        inter: ['Inter', 'sans-serif'], // Font cho Admin
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f4f6f8; }
+        
+        /* Generic Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Frontend Specific Styles (Classic) */
+        .module-header { border-bottom: 2px solid var(--color-brand-red, #b91c1c); }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .fade-enter { opacity: 0; animation: fadeIn 0.3s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        .article-body p { margin-bottom: 1rem; line-height: 1.6; }
+        .article-body img { max-width: 100%; border-radius: 2px; margin: 1rem auto; display: block; box-shadow: none; }
+        .article-body h3 { font-size: 1.2rem; font-weight: bold; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+
+        /* Admin Specific Styles (Modern) */
+        .admin-input {
+            width: 100%; padding: 0.625rem 1rem; font-size: 0.875rem; border-radius: 0.5rem;
+            border: 1px solid #e2e8f0; background-color: #fff; color: #1e293b;
+            transition: all 0.2s ease; outline: none; font-family: 'Inter', sans-serif;
+        }
+        .admin-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        .admin-input:disabled, .admin-input[readonly] { background-color: #f1f5f9; color: #64748b; }
+        
+        .admin-btn {
+            display: inline-flex; items-center: center; gap: 0.5rem; padding: 0.625rem 1.25rem;
+            font-size: 0.875rem; font-weight: 600; border-radius: 0.5rem; transition: all 0.2s ease;
+            cursor: pointer; justify-content: center; font-family: 'Inter', sans-serif;
+        }
+        .admin-btn-primary { background-color: var(--color-brand-blue, #004b87); color: white; box-shadow: 0 2px 4px rgba(0,75,135,0.2); }
+        .admin-btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,75,135,0.25); }
+        
+        .admin-table { font-family: 'Inter', sans-serif; }
+        .admin-table th { background-color: #f8fafc; color: #475569; font-weight: 600; padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.025em; }
+        .admin-table td { padding: 1rem; border-bottom: 1px solid #e2e8f0; vertical-align: middle; color: #334155; font-size: 0.875rem; }
+        .admin-table tr:hover td { background-color: #f8fafc; }
+        
+        .admin-nav-item.active { background-color: rgba(255,255,255,0.1); color: #fff; font-weight: 600; border-left-color: #3b82f6; }
+
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast { animation: slideInRight 0.3s ease-out forwards; }
+    </style>
+</head>
+<body class="font-sans text-gray-800 text-sm overflow-x-hidden">
+
+    <!-- ========================================== -->
+    <!-- 1. GIAO DIỆN WEBSITE (FRONTEND - CLASSIC)  -->
+    <!-- ========================================== -->
+    <div id="frontend-wrapper" class="max-w-[1200px] mx-auto bg-white shadow-xl min-h-screen relative flex flex-col transition-all duration-300">
+        
+        <!-- TOPBAR & BANNER -->
+        <div class="bg-gray-100 flex flex-col sm:flex-row justify-between items-center px-4 py-1 border-b border-gray-200 text-xs text-gray-600">
+            <div class="flex items-center gap-1.5">
+                <div id="real-time-clock" class="mb-2 sm:mb-0 font-medium">Đang tải ngày giờ...</div>
+                <a href="#" onclick="promptTimeEdit(event)" class="w-1.5 h-3 bg-gray-400 inline-block opacity-0 hover:opacity-50 transition cursor-pointer rounded-full" title="Hệ thống"></a>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="#" class="hover:text-linkBlue front-nav hidden md:block transition" data-view="home">Khối THCS</a>
+                <a href="#" class="hover:text-linkBlue font-bold text-orange-500 transition">RSS</a>
+                <a href="#" class="hover:text-linkBlue transition">EN</a>
+                <div class="relative flex items-center">
+                    <input type="text" id="front-search-input" placeholder="Từ khóa tìm..." class="border border-gray-300 px-2 py-1 outline-none focus:border-brandBlue text-xs w-32 md:w-48 transition">
+                    <button id="front-search-btn" class="bg-gray-200 border border-gray-300 border-l-0 px-2 py-1 text-gray-600 hover:bg-gray-300 transition"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative w-full h-[150px] md:h-[220px] bg-brandBlue overflow-hidden flex-shrink-0 cursor-pointer front-nav" data-view="home">
+            <img id="banner-img" src="" alt="Banner" class="w-full h-full object-cover opacity-80">
+            <div class="absolute top-0 left-0 w-full h-full bg-black/30"></div>
+            <div class="absolute bottom-4 left-6 text-white text-shadow-md flex items-center gap-3">
+                <img id="banner-logo" src="" class="w-14 h-14 md:w-20 md:h-20 object-contain hidden bg-white/90 p-1 rounded shadow-lg" alt="Logo">
+                <div>
+                    <h1 id="banner-school-name" class="text-2xl md:text-3xl font-bold uppercase tracking-wide drop-shadow-lg">ĐANG TẢI...</h1>
+                    <p id="banner-slogan" class="text-md md:text-lg font-medium drop-shadow-md">Rèn Đức - Luyện Tài</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN NAVIGATION -->
+        <nav class="bg-brandBlue text-white shadow-md sticky top-0 z-40 flex-shrink-0 border-b-2 border-brandRed">
+            <ul id="frontend-main-nav" class="flex flex-wrap text-sm font-bold uppercase">
+                <!-- Nạp JS -->
+            </ul>
+        </nav>
+
+        <!-- MARQUEE -->
+        <div class="bg-white border-b border-gray-200 px-4 py-1.5 flex items-center shadow-sm text-[13px] flex-shrink-0">
+            <div class="text-brandRed mr-3 shrink-0 flex items-center font-bold">
+                <i class="fa-solid fa-volume-high animate-pulse mr-1"></i> Thông báo:
+            </div>
+            <marquee id="marquee-text" class="font-bold text-brandRed w-full" scrollamount="5" onmouseover="this.stop()" onmouseout="this.start()">
+                Đang tải thông báo...
+            </marquee>
+        </div>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="p-4 flex flex-col md:flex-row gap-6 flex-grow">
+            <!-- CỘT TRÁI -->
+            <div id="frontend-left-column" class="w-full md:w-[70%]">
+                <!-- Nội dung Javascript đổ vào -->
+            </div>
+
+            <!-- CỘT PHẢI -->
+            <div class="w-full md:w-[30%] flex flex-col gap-4 flex-shrink-0">
+                <a id="sidebar-banner" href="#" class="block bg-[#eef2f5] border border-gray-300 p-3 text-center hover:bg-gray-200 transition" target="_blank">
+                    <h3 id="sidebar-banner-title" class="font-bold text-brandRed uppercase text-sm mb-2">...</h3>
+                    <img id="sidebar-banner-img" src="" class="w-full h-auto object-cover border border-gray-300 shadow-sm" alt="Banner">
+                </a>
+
+                <div class="border border-gray-200 p-3 bg-bgOffWhite">
+                    <h3 class="font-bold text-gray-700 text-[13px] mb-2 uppercase border-b border-gray-300 pb-1">Liên Kết Website</h3>
+                    <select id="sidebar-links" class="w-full border border-gray-300 p-1.5 text-xs outline-none focus:border-brandBlue mb-4 transition" onchange="if(this.value) window.open(this.value, '_blank')">
+                        <option value="">Lựa chọn website...</option>
+                    </select>
+                </div>
+
+                <div class="border border-gray-200">
+                    <h3 class="bg-gray-100 border-b border-gray-200 text-brandRed font-bold px-3 py-2 uppercase text-[13px]">Video Tiêu Điểm</h3>
+                    <div class="p-3 bg-white" id="sidebar-video-container">
+                        <!-- JS load -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="bg-white border-t border-gray-200 p-6 flex flex-col md:flex-row items-center gap-4 text-[13px] text-gray-700 flex-shrink-0 mt-auto w-full">
+            <div class="w-full">
+                <h2 id="footer-school-name" class="font-bold text-[15px] uppercase text-brandBlue mb-2">ĐANG TẢI...</h2>
+                <p id="footer-address"><i class="fa-solid fa-location-dot w-4 text-brandRed"></i> Địa chỉ: ...</p>
+                <p id="footer-phone"><i class="fa-solid fa-phone w-4 text-brandRed"></i> Điện thoại: ...</p>
+                <p id="footer-email"><i class="fa-solid fa-envelope w-4 text-brandRed"></i> Email: ...</p>
+                <div class="mt-2 text-gray-500 flex items-center gap-2">
+                    <a href="#" onclick="openAdmin(event)" class="w-1.5 h-4 bg-brandBlue inline-block opacity-30 hover:opacity-100 transition cursor-pointer" title="Hệ thống quản trị"></a>
+                    <span id="footer-copyright">&copy; Bản quyền thuộc trường</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- 2. GIAO DIỆN QUẢN TRỊ (ADMIN PRO SAAS)     -->
+    <!-- ========================================== -->
+    <div id="admin-container" class="hidden fixed inset-0 z-[150] bg-slate-50 h-screen overflow-hidden flex font-inter">
+        
+        <!-- SIDEBAR TRÁI -->
+        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col flex-shrink-0 shadow-2xl z-20">
+            <!-- Admin Brand -->
+            <div class="h-16 flex items-center px-6 bg-slate-950 border-b border-slate-800">
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-brandBlue flex items-center justify-center text-white font-bold mr-3 shadow-lg">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h1 class="text-white font-bold text-sm tracking-wide leading-tight">CMS SYSTEM</h1>
+                    <div class="text-[10px] text-slate-400 uppercase tracking-wider line-clamp-1" id="admin-sidebar-schoolname">Đang tải...</div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex-1 overflow-y-auto py-6 px-3 custom-scrollbar">
+                <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-3 px-3">Bảng Quản Trị</div>
+                <nav class="space-y-1">
+                    <a href="#" onclick="switchView('dashboard', this)" class="admin-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent active">
+                        <i class="fa-solid fa-chart-pie w-5 text-center"></i> <span>Tổng Quan</span>
+                    </a>
+                    <a href="#" onclick="switchView('articles', this)" class="admin-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-newspaper w-5 text-center"></i> <span>Quản lý Bài viết</span>
+                    </a>
+                    <a href="#" id="menu-categories" onclick="switchView('categories', this)" class="admin-nav-item hidden items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-folder-tree w-5 text-center"></i> <span>Chuyên mục & Menu</span>
+                    </a>
+                    <a href="#" onclick="switchView('videos', this)" class="admin-nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent">
+                        <i class="fa-brands fa-youtube w-5 text-center"></i> <span>Video Nổi bật</span>
+                    </a>
+                    <div class="my-4 border-t border-slate-800 mx-3"></div>
+                    <div class="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-3 px-3">Cài Đặt Hệ Thống</div>
+                    <a href="#" id="menu-info" onclick="switchView('info', this)" class="admin-nav-item hidden items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-sliders w-5 text-center"></i> <span>Giao diện & Cấu hình</span>
+                    </a>
+                    <a href="#" id="menu-users" onclick="switchView('users', this)" class="admin-nav-item hidden items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 hover:text-white transition-colors border-l-4 border-transparent">
+                        <i class="fa-solid fa-users-gear w-5 text-center"></i> <span>Quản trị Tài khoản</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Footer Sidebar -->
+            <div class="p-4 bg-slate-950 border-t border-slate-800">
+                <button onclick="closeAdmin()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Về Website
+                </button>
+            </div>
+        </aside>
+
+        <!-- NỘI DUNG CHÍNH (RIGHT) -->
+        <div class="flex-1 flex flex-col relative overflow-hidden font-inter">
+            <!-- Top Header -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-10 shrink-0">
+                <div class="flex items-center gap-3">
+                    <h2 id="admin-page-title" class="text-lg font-bold text-slate-800">Bảng Điều Khiển</h2>
+                </div>
+                <div class="flex items-center gap-5">
+                    <div class="text-sm font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-md" id="admin-top-clock"><i class="fa-regular fa-clock mr-1.5"></i>Đang tải...</div>
+                    <div class="h-6 w-px bg-slate-200"></div>
+                    
+                    <div class="group relative">
+                        <div class="flex items-center gap-3 cursor-pointer hover:bg-slate-50 p-1.5 pr-3 rounded-xl transition-colors border border-transparent hover:border-slate-200">
+                            <div class="w-9 h-9 rounded-full bg-blue-100 text-brandBlue flex items-center justify-center font-bold text-lg">
+                                <i class="fa-solid fa-user-shield"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-700 leading-none text-sm" id="admin-user-name-display">Admin</p>
+                                <p class="text-[11px] text-blue-600 font-medium mt-1" id="admin-user-role-display">Quản trị viên</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-down text-xs text-slate-400 ml-1"></i>
+                        </div>
+                        <!-- Dropdown -->
+                        <div class="absolute right-0 top-full mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-2 hidden group-hover:block z-50">
+                            <a href="#" onclick="handleLogout()" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium"><i class="fa-solid fa-power-off mr-2"></i> Đăng xuất an toàn</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Khung Đổ Nội Dung -->
+            <main class="flex-1 overflow-y-auto p-6 md:p-8" id="admin-main-content">
+                <!-- Nội dung render bằng JS -->
+            </main>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- MÀN HÌNH ĐĂNG NHẬP & MODALS                -->
+    <!-- ========================================== -->
+    <div id="login-screen" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[200] hidden font-inter">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden transform transition-all">
+            <div class="bg-slate-50 p-6 text-center border-b border-slate-100 relative">
+                <button onclick="document.getElementById('login-screen').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <div class="w-16 h-16 bg-blue-100 text-brandBlue rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3 shadow-inner">
+                    <img id="login-logo-img" src="" class="w-10 h-10 object-contain hidden">
+                    <i id="login-icon" class="fa-solid fa-fingerprint"></i>
+                </div>
+                <h1 class="text-lg font-bold text-slate-800">Xác Thực Quản Trị</h1>
+                <p class="text-xs text-slate-500 mt-1">Vui lòng đăng nhập để truy cập CMS</p>
+            </div>
+            <div class="p-6 pt-5">
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="mb-4">
+                        <label class="block text-[13px] font-semibold text-slate-700 mb-1.5">Tài khoản truy cập</label>
+                        <input type="text" id="username" class="admin-input" placeholder="Tên đăng nhập" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-[13px] font-semibold text-slate-700 mb-1.5">Mật khẩu</label>
+                        <input type="password" id="password" class="admin-input" placeholder="••••••••" required>
+                    </div>
+                    <div id="login-error" class="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-lg mb-5 hidden flex items-center gap-2 font-medium">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Thông tin đăng nhập không chính xác!
+                    </div>
+                    <button type="submit" class="w-full admin-btn admin-btn-primary py-2.5">Xác Nhận Đăng Nhập</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form Chung Của Admin -->
+    <div id="form-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[250] hidden flex items-center justify-center p-4 sm:p-6 font-inter">
+        <div class="bg-white w-full max-w-5xl max-h-[95vh] flex flex-col shadow-2xl rounded-2xl overflow-hidden">
+            <div class="bg-white px-6 py-4 flex justify-between items-center border-b border-slate-200">
+                <h2 id="modal-title" class="font-bold text-slate-800 text-base flex items-center gap-2">Tiêu đề Modal</h2>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-red-500 w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1 bg-slate-50/50 custom-scrollbar" id="modal-body"></div>
+            <div class="bg-white px-6 py-4 border-t border-slate-200 flex justify-end gap-3">
+                <button onclick="closeModal()" class="admin-btn bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 shadow-sm">Hủy bỏ</button>
+                <button id="modal-save-btn" class="admin-btn admin-btn-primary px-8">Lưu Thông Tin</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[300] flex flex-col gap-3 pointer-events-none font-inter"></div>
+
+    <!-- ========================================== -->
+    <!-- KỊCH BẢN JAVASCRIPT                        -->
+    <!-- ========================================== -->
+    <script>
+        // --- A. DỮ LIỆU & TIỆN ÍCH ---
+        function getToday() {
+            const d = new Date();
+            return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+        }
+
+        function timeAgo(ts) {
+            const seconds = Math.floor((Date.now() - ts) / 1000);
+            if (seconds < 60) return "Vừa xong";
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} phút trước`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `${hours} giờ trước`;
+            const days = Math.floor(hours / 24);
+            return `${days} ngày trước`;
+        }
+
+        function generateDefaultVisits() {
+            let v = { total: 12450, daily: {} };
+            for(let i=6; i>=0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dateStr = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+                v.daily[dateStr] = Math.floor(Math.random() * 400) + 150; 
+            }
+            return v;
+        }
+
+        const defaultData = {
+            users: [
+                { id: "u1", username: "hethong.quanly", password: "HeThong@QuanLy#01", role: "Owner", name: "Chủ Sở Hữu" },
+                { id: "u2", username: "hieutruong", password: "123", role: "Head", name: "Ban Giám Hiệu" },
+                { id: "u3", username: "admin", password: "123", role: "Admin", name: "Quản Trị Viên" },
+                { id: "u4", username: "mod", password: "123", role: "Moderator", name: "Biên Tập Viên" }
+            ],
+            categories: [
+                { id: "GioiThieu", name: "Giới thiệu", showInMenu: true },
+                { id: "LichCongTac", name: "Lịch công tác tuần", showInMenu: true },
+                { id: "ChuyenMon", name: "Tổ chuyên môn", showInMenu: true },
+                { id: "DoanThe", name: "Đoàn thể - Phòng ban", showInMenu: true },
+                { id: "CongKhai", name: "Công khai giáo dục", showInMenu: true },
+                { id: "TuyenSinh", name: "Thông tin Tuyển sinh", showInMenu: true },
+                { id: "TinTuc", name: "Tin tức - Sự kiện", showInMenu: false },
+                { id: "HoatDong", name: "Hoạt động - Sự kiện", showInMenu: false },
+                { id: "ThongBao", name: "Thông báo chung", showInMenu: false }
+            ],
+            articles: [
+                { id: "1", title: "Tuyên dương học sinh đạt giải Nhất kỳ thi Học sinh giỏi", date: "07/04/2026", author: "Ban Giám Hiệu", cat: "TinTuc", img: "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=600", content: "<p>Nội dung bài viết mẫu...</p>", gallery: [] },
+                { id: "2", title: "Thông báo nghỉ lễ Giỗ tổ Hùng Vương", date: "07/04/2026", author: "Văn phòng", cat: "ThongBao", img: "", content: "<p>Nội dung thông báo...</p>" },
+                { id: "101", title: "Công khai tài chính năm học", date: "01/04/2026", author: "Kế toán", cat: "CongKhai", img: "", content: "<p>Hồ sơ đính kèm...</p>" }
+            ],
+            videos: [
+                { id: "v1", title: "Phóng sự: Hoạt động trải nghiệm hướng nghiệp", url: "https://www.youtube.com/embed/M7lc1UVf-VE" }
+            ],
+            info: {
+                schoolName: "TRƯỜNG TRUNG HỌC CƠ SỞ VÕ THỊ CẦM",
+                slogan: "Rèn Đức - Luyện Tài",
+                address: "Lê Quang Định, Hoà Lộc, Tân Thành Bình, Vĩnh Long",
+                email: "c2vothicam.vinhlong@moet.edu.vn",
+                phone: "(Đang cập nhật)",
+                logoImg: "",
+                bannerImg: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=2000",
+                sidebarImg: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=400",
+                sidebarBannerTitle: "THÔNG TIN TUYỂN SINH",
+                sidebarBannerLink: "",
+                marqueeText: "Website hiện đang trong giai đoạn thử nghiệm và còn trong quá trình hoàn thiện. Đây là sản phẩm thuộc dự án Thanh thiếu niên sáng tạo (THNST), được xây dựng với mục đích học tập và trải nghiệm.",
+                weblinks: "Bộ Giáo dục và Đào tạo | https://moet.gov.vn/\nSở GD&ĐT Vĩnh Long | https://vinhlong.edu.vn/",
+                themeBlue: "#004b87",
+                themeRed: "#b91c1c"
+            },
+            visits: generateDefaultVisits(),
+            logs: [
+                { action: "Hệ thống đã được khởi tạo thành công.", user: "Server", time: Date.now() - 3600000, type: "green" }
+            ]
+        };
+
+        function getData(key) {
+            try {
+                const data = localStorage.getItem('appData_' + key);
+                return data ? JSON.parse(data) : defaultData[key] || [];
+            } catch (e) { return defaultData[key] || []; }
+        }
+
+        function saveData(key, data) {
+            try {
+                localStorage.setItem('appData_' + key, JSON.stringify(data));
+            } catch (e) {
+                alert("LỖI: Ảnh quá nặng khiến bộ nhớ đầy! Vui lòng dùng URL ảnh trên mạng thay vì tải trực tiếp.");
+            }
+        }
+
+        function applyTheme() {
+            const info = getData('info');
+            document.documentElement.style.setProperty('--color-brand-blue', info.themeBlue || '#004b87');
+            document.documentElement.style.setProperty('--color-brand-red', info.themeRed || '#b91c1c');
+        }
+        applyTheme();
+
+        function addLog(action, type = 'blue') {
+            let logs = getData('logs');
+            const currentUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            const userName = currentUser ? currentUser.name : 'Khách';
+            logs.unshift({ action, user: userName, time: Date.now(), type });
+            if(logs.length > 15) logs.pop(); 
+            saveData('logs', logs);
+        }
+
+        function initStorage() {
+            if (!localStorage.getItem('appData_users')) saveData('users', defaultData.users);
+            if (!localStorage.getItem('appData_visits')) saveData('visits', defaultData.visits);
+            if (!localStorage.getItem('appData_logs')) saveData('logs', defaultData.logs);
+            
+            let cats = localStorage.getItem('appData_categories');
+            if (!cats) saveData('categories', defaultData.categories);
+            else {
+                let parsedCats = JSON.parse(cats);
+                let isCatsDirty = false;
+                if (!parsedCats.find(c => c.id === 'ThongBao')) {
+                    parsedCats.push({ id: "ThongBao", name: "Thông báo chung", showInMenu: false });
+                    isCatsDirty = true;
+                }
+                const kiemDinhIndex = parsedCats.findIndex(c => c.id === 'KiemDinh');
+                if (kiemDinhIndex !== -1) {
+                    parsedCats[kiemDinhIndex] = { id: "TuyenSinh", name: "Thông tin Tuyển sinh", showInMenu: true };
+                    isCatsDirty = true;
+                }
+                if (isCatsDirty) saveData('categories', parsedCats);
+            }
+
+            if (!localStorage.getItem('appData_articles')) saveData('articles', defaultData.articles);
+            else {
+                let arts = JSON.parse(localStorage.getItem('appData_articles'));
+                let isArtDirty = false;
+                arts.forEach(a => {
+                    if (a.cat === 'KiemDinh') { a.cat = 'TuyenSinh'; isArtDirty = true; }
+                });
+                if (isArtDirty) saveData('articles', arts);
+            }
+            
+            if (!localStorage.getItem('appData_videos')) saveData('videos', defaultData.videos);
+            
+            let info = localStorage.getItem('appData_info');
+            if (!info) saveData('info', defaultData.info);
+            else {
+                let parsedInfo = JSON.parse(info);
+                let isDirty = false;
+                if (parsedInfo.slogan === undefined) { parsedInfo.slogan = defaultData.info.slogan; isDirty = true; }
+                if (parsedInfo.logoImg === undefined) { parsedInfo.logoImg = defaultData.info.logoImg; isDirty = true; }
+                if (parsedInfo.sidebarImg === undefined) {
+                    parsedInfo.sidebarImg = parsedInfo.kiemDinhImg !== undefined ? parsedInfo.kiemDinhImg : defaultData.info.sidebarImg;
+                    delete parsedInfo.kiemDinhImg;
+                    isDirty = true;
+                }
+                if (parsedInfo.sidebarBannerTitle === undefined || parsedInfo.sidebarBannerTitle === 'Kiểm Định Giáo Dục') { 
+                    parsedInfo.sidebarBannerTitle = defaultData.info.sidebarBannerTitle; isDirty = true; 
+                }
+                if (parsedInfo.sidebarBannerLink === undefined) { parsedInfo.sidebarBannerLink = defaultData.info.sidebarBannerLink; isDirty = true; }
+                if (parsedInfo.weblinks === undefined) { parsedInfo.weblinks = defaultData.info.weblinks; isDirty = true; }
+                if (parsedInfo.themeBlue === undefined) { parsedInfo.themeBlue = defaultData.info.themeBlue; isDirty = true; }
+                if (parsedInfo.themeRed === undefined) { parsedInfo.themeRed = defaultData.info.themeRed; isDirty = true; }
+                if (isDirty) saveData('info', parsedInfo);
+            }
+        }
+
+        const setElText = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text || ''; };
+        const setElHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html || ''; };
+
+        // --- B. FRONTEND (CLASSIC RENDER) ---
+        let frontDatabase = { articles: [] };
+        let frontSliderImages = [];
+        let frontSliderInterval;
+        let frontCurrentSlide = 0;
+        const frontendLeftColumn = document.getElementById('frontend-left-column');
+
+        function syncDataToFrontend() {
+            const infoData = getData('info');
+            document.title = (infoData.schoolName || "Trang chủ") + " | Cổng Thông Tin Điện Tử";
+            
+            setElText('banner-school-name', infoData.schoolName);
+            setElText('banner-slogan', infoData.slogan);
+            setElText('footer-school-name', infoData.schoolName);
+            setElText('admin-sidebar-schoolname', infoData.schoolName); 
+            
+            const bannerImgEl = document.getElementById('banner-img');
+            if (bannerImgEl && infoData.bannerImg) bannerImgEl.src = infoData.bannerImg;
+            
+            const bannerLogoEl = document.getElementById('banner-logo');
+            const loginLogoEl = document.getElementById('login-logo-img');
+            const loginIconEl = document.getElementById('login-icon');
+            
+            if (infoData.logoImg && infoData.logoImg.trim() !== '') {
+                if (bannerLogoEl) { bannerLogoEl.src = infoData.logoImg; bannerLogoEl.classList.remove('hidden'); }
+                if (loginLogoEl) { loginLogoEl.src = infoData.logoImg; loginLogoEl.classList.remove('hidden'); }
+                if (loginIconEl) loginIconEl.classList.add('hidden');
+            } else {
+                if (bannerLogoEl) bannerLogoEl.classList.add('hidden');
+                if (loginLogoEl) loginLogoEl.classList.add('hidden');
+                if (loginIconEl) loginIconEl.classList.remove('hidden');
+            }
+            
+            setElHTML('footer-address', `<i class="fa-solid fa-location-dot w-4 text-brandRed"></i> Địa chỉ: ${infoData.address || ''}`);
+            setElHTML('footer-phone', `<i class="fa-solid fa-phone w-4 text-brandRed"></i> Điện thoại: <i>${infoData.phone || ''}</i>`);
+            setElHTML('footer-email', `<i class="fa-solid fa-envelope w-4 text-brandRed"></i> Email: ${infoData.email || ''}`);
+            setElHTML('footer-copyright', `&copy; Bản quyền thuộc ${infoData.schoolName || ''}`);
+
+            const sidebarBanner = document.getElementById('sidebar-banner');
+            if (sidebarBanner) {
+                if (infoData.sidebarImg && infoData.sidebarImg.trim() !== '') {
+                    sidebarBanner.classList.remove('hidden');
+                    sidebarBanner.classList.add('block');
+                    setElText('sidebar-banner-title', infoData.sidebarBannerTitle || 'Banner Cột Phải');
+                    const imgEl = document.getElementById('sidebar-banner-img');
+                    if (imgEl) imgEl.src = infoData.sidebarImg;
+                    sidebarBanner.href = infoData.sidebarBannerLink || '#';
+                    if (sidebarBanner.href === '#') sidebarBanner.removeAttribute('target'); else sidebarBanner.setAttribute('target', '_blank');
+                } else {
+                    sidebarBanner.classList.remove('block');
+                    sidebarBanner.classList.add('hidden');
+                }
+            }
+
+            setElText('marquee-text', infoData.marqueeText);
+
+            const linksStr = infoData.weblinks || "";
+            const linksArr = linksStr.split('\n').filter(l => l.includes('|'));
+            const selectEl = document.getElementById('sidebar-links');
+            if(selectEl) {
+                selectEl.innerHTML = '<option value="">Lựa chọn website...</option>' + 
+                    linksArr.map(l => {
+                        const parts = l.split('|');
+                        return `<option value="${parts[1]?.trim() || ''}">${parts[0]?.trim() || ''}</option>`;
+                    }).join('');
+            }
+
+            const categoriesData = getData('categories');
+            const navUl = document.getElementById('frontend-main-nav');
+            if (navUl) {
+                let navHTML = `<li><a href="#" class="block px-4 py-3 hover:bg-black/20 border-r border-black/10 front-nav transition" data-view="home" title="Trang chủ"><i class="fa-solid fa-house"></i></a></li>`;
+                categoriesData.filter(c => c.showInMenu).forEach(c => {
+                    navHTML += `<li><a href="#" class="block px-4 py-3 hover:bg-black/20 border-r border-black/10 front-nav transition" data-view="category" data-cat="${c.id}">${c.name}</a></li>`;
+                });
+                navUl.innerHTML = navHTML;
+            }
+
+            const videosData = getData('videos');
+            const videoContainer = document.getElementById('sidebar-video-container');
+            if (videosData.length > 0 && videoContainer) {
+                const vid = videosData[0];
+                let vidUrl = vid.url;
+                if (vidUrl.includes('youtube.com/watch?v=')) {
+                    try { vidUrl = 'https://www.youtube.com/embed/' + new URLSearchParams(vidUrl.split('?')[1]).get('v'); } catch(e){}
+                } else if (vidUrl.includes('youtu.be/')) {
+                    vidUrl = 'https://www.youtube.com/embed/' + vidUrl.split('youtu.be/')[1].split('?')[0];
+                }
+                
+                if (vid.img) {
+                    videoContainer.innerHTML = `
+                        <div class="relative w-full h-44 rounded border border-gray-200 overflow-hidden group cursor-pointer" onclick="this.innerHTML='<iframe class=\\'w-full h-full\\' src=\\'${vidUrl}?autoplay=1\\' frameborder=\\'0\\' allow=\\'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture\\' allowfullscreen></iframe>'">
+                            <img src="${vid.img}" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition"><i class="fa-brands fa-youtube text-5xl text-red-600 drop-shadow-md"></i></div>
+                        </div>
+                        <p class="text-xs text-gray-600 mt-2 text-center font-medium leading-relaxed">${vid.title}</p>
+                    `;
+                } else {
+                    videoContainer.innerHTML = `<iframe class="w-full h-44 rounded border border-gray-200" src="${vidUrl}" frameborder="0" allowfullscreen></iframe><p class="text-xs text-gray-600 mt-2 text-center font-medium leading-relaxed">${vid.title}</p>`;
+                }
+            } else if (videoContainer) {
+                videoContainer.innerHTML = '<p class="text-sm text-gray-500 italic text-center py-4">Chưa có video nào.</p>';
+            }
+
+            const articlesData = getData('articles');
+            frontDatabase.articles = [...articlesData].reverse();
+            const imgs = frontDatabase.articles.filter(a => a.img && a.img.trim() !== '').slice(0, 3);
+            frontSliderImages = imgs.map(a => ({ id: a.id, src: a.img, title: a.title }));
+        }
+
+        function renderFrontHome() {
+            const articles = frontDatabase.articles;
+            let tinMoiHTML = articles.slice(0, 5).map(a => `
+                <a href="#" class="block hover:bg-gray-50 pb-2 border-b border-gray-100 last:border-0 front-nav transition" data-view="article" data-id="${a.id}">
+                    <h3 class="text-linkBlue font-medium leading-snug line-clamp-2">${a.title}</h3>
+                    <span class="text-[11px] text-gray-500">${a.date}</span>
+                </a>
+            `).join('') || '<div class="text-gray-500 text-sm">Đang cập nhật...</div>';
+
+            let tinTucHTML = articles.filter(a => a.img && ['TinTuc', 'HoatDong'].includes(a.cat)).slice(0, 4).map(a => `
+                <div class="flex gap-3 cursor-pointer front-nav group" data-view="article" data-id="${a.id}">
+                    <img src="${a.img}" class="w-24 h-20 object-cover border border-gray-200 p-0.5 group-hover:opacity-80 transition">
+                    <div>
+                        <h3 class="font-medium text-linkBlue group-hover:underline line-clamp-2 mb-1 text-[13px] transition">${a.title}</h3>
+                        <div class="text-xs text-gray-500">${a.date}</div>
+                    </div>
+                </div>
+            `).join('') || '<div class="text-gray-500 text-sm col-span-2">Chưa có bài viết kèm hình ảnh...</div>';
+
+            let thongBaoHTML = articles.filter(a => ['ThongBao', 'CongKhai', 'LichCongTac'].includes(a.cat)).slice(0, 6).map(a => `
+                <div class="flex gap-2 items-start border-b border-gray-100 pb-2 group">
+                    <i class="fa-solid fa-caret-right text-brandRed mt-1 text-xs transition-transform group-hover:translate-x-1"></i>
+                    <a href="#" class="text-gray-800 group-hover:text-linkBlue font-medium text-[13px] front-nav transition" data-view="article" data-id="${a.id}">${a.title}</a>
+                </div>
+            `).join('') || '<div class="text-gray-500 text-[13px] italic col-span-2">Chưa có thông báo nào.</div>';
+
+            if(frontendLeftColumn) frontendLeftColumn.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 fade-enter">
+                    <div class="border border-gray-200 p-1 relative group cursor-pointer front-nav slider-container" data-view="article" data-id="${frontSliderImages[0]?.id || ''}">
+                        <img id="front-slider-img" src="${frontSliderImages[0]?.src || ''}" class="w-full h-[220px] object-cover transition duration-500">
+                        <div id="front-slider-title" class="absolute bottom-1 left-1 right-1 bg-black/70 text-white p-2 text-sm font-bold line-clamp-2 transition duration-500">
+                            ${frontSliderImages[0]?.title || 'Đang cập nhật'}
+                        </div>
+                    </div>
+                    <div class="border border-gray-200 flex flex-col">
+                        <div class="bg-gray-100 font-bold text-brandRed px-3 py-2 border-b border-gray-200 uppercase">Tin mới nhất</div>
+                        <div class="p-3 h-[180px] overflow-y-auto custom-scrollbar flex flex-col gap-3">${tinMoiHTML}</div>
+                    </div>
+                </div>
+                <div class="mb-6 fade-enter">
+                    <div class="module-header flex items-end mb-4"><h2 class="bg-brandRed text-white px-3 py-1.5 font-bold uppercase text-[13px]">Tin Tức - Sự Kiện</h2></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">${tinTucHTML}</div>
+                </div>
+                <div class="mb-6 fade-enter">
+                    <div class="module-header flex items-end mb-4 gap-y-2"><h2 class="bg-brandRed text-white px-3 py-1.5 font-bold uppercase text-[13px]">Thông Báo Nhà Trường</h2></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">${thongBaoHTML}</div>
+                </div>
+            `;
+            startFrontSlider();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function renderFrontArticle(id) {
+            stopFrontSlider();
+            const article = frontDatabase.articles.find(a => a.id === id) || { title: "Không tìm thấy", content: "<p>Bài viết không tồn tại.</p>", date: "", author: "", gallery: [] };
+            
+            let galleryHTML = '';
+            if (article.gallery && article.gallery.length > 0) {
+                galleryHTML = `
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <h3 class="font-bold text-brandBlue mb-4 uppercase text-[14px]"><i class="fa-solid fa-images mr-2"></i> Hình ảnh đính kèm</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            ${article.gallery.map(src => `<img src="${src}" class="w-full h-32 md:h-40 object-cover border border-gray-300 rounded shadow-sm hover:opacity-80 transition cursor-pointer" onclick="window.open('${src}', '_blank')">`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if(frontendLeftColumn) frontendLeftColumn.innerHTML = `
+                <div class="fade-enter bg-white p-4 md:p-6 border border-gray-200">
+                    <div class="text-xs text-gray-500 mb-4 pb-2 border-b border-gray-100"><a href="#" class="hover:text-brandRed front-nav" data-view="home"><i class="fa-solid fa-house"></i> Trang chủ</a> &raquo; Chi tiết bản tin</div>
+                    <h1 class="text-xl md:text-2xl font-bold text-brandBlue mb-3 leading-snug">${article.title}</h1>
+                    <div class="flex items-center gap-4 text-xs text-gray-500 mb-6 bg-gray-50 p-2 rounded border border-gray-100">
+                        <span><i class="fa-regular fa-calendar text-brandRed mr-1"></i> ${article.date}</span>
+                        <span><i class="fa-solid fa-user-pen text-brandBlue mr-1"></i> ${article.author}</span>
+                    </div>
+                    <div class="text-[14px] text-gray-800 article-body">
+                        ${article.img ? `<img src="${article.img}" class="w-full max-h-[400px] object-cover mb-4 rounded border border-gray-100">` : ''}
+                        ${article.content}
+                    </div>
+                    ${galleryHTML}
+                </div>
+            `;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        function renderFrontCategory(catId) {
+            stopFrontSlider();
+            const categories = getData('categories');
+            const catObj = categories.find(c => c.id === catId);
+            const catTitle = catObj ? catObj.name : 'Danh mục bài viết';
+            
+            const filtered = frontDatabase.articles.filter(a => a.cat === catId);
+            
+            let listHTML = filtered.map(a => `
+                <div class="flex gap-4 py-3 border-b border-gray-100 cursor-pointer front-nav hover:bg-gray-50 p-2 transition" data-view="article" data-id="${a.id}">
+                    ${a.img ? `<img src="${a.img}" class="w-32 h-24 object-cover border border-gray-200">` : `<div class="w-32 h-24 bg-gray-200 flex items-center justify-center text-gray-400 text-xs">Không ảnh</div>`}
+                    <div class="flex-1">
+                        <h3 class="font-bold text-linkBlue hover:underline text-[14px] mb-1 leading-snug transition">${a.title}</h3>
+                        <p class="text-[11px] text-gray-500 mb-2"><i class="fa-regular fa-clock mr-1"></i> ${a.date}</p>
+                    </div>
+                </div>
+            `).join('') || `<div class="p-4 text-center text-gray-500">Chưa có bài viết.</div>`;
+
+            if(frontendLeftColumn) frontendLeftColumn.innerHTML = `
+                <div class="fade-enter bg-white border border-gray-200">
+                    <div class="module-header bg-gray-100 p-3"><h2 class="font-bold uppercase text-brandRed text-[15px]">${catTitle}</h2></div>
+                    <div class="p-4 flex flex-col">${listHTML}</div>
+                </div>
+            `;
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        document.getElementById('frontend-wrapper')?.addEventListener('click', function(e) {
+            const target = e.target.closest('.front-nav');
+            if(target) {
+                e.preventDefault();
+                const view = target.getAttribute('data-view');
+                if(view === 'home') renderFrontHome();
+                else if(view === 'article') renderFrontArticle(target.getAttribute('data-id'));
+                else if(view === 'category') renderFrontCategory(target.getAttribute('data-cat'));
+            }
+        });
+        
+        document.getElementById('front-search-btn')?.addEventListener('click', () => {
+            const query = document.getElementById('front-search-input').value.toLowerCase().trim();
+            if(!query) return;
+            stopFrontSlider();
+            const results = frontDatabase.articles.filter(a => a.title.toLowerCase().includes(query));
+            let listHTML = results.map(a => `
+                <div class="py-3 border-b border-gray-100 cursor-pointer front-nav hover:bg-gray-50 px-2 transition" data-view="article" data-id="${a.id}">
+                    <h3 class="font-bold text-linkBlue hover:underline text-[14px] mb-1">${a.title}</h3>
+                    <p class="text-xs text-gray-500">${a.date}</p>
+                </div>
+            `).join('') || `<p class="p-4 text-brandRed font-medium">Không tìm thấy bản tin nào phù hợp.</p>`;
+            if(frontendLeftColumn) frontendLeftColumn.innerHTML = `<div class="fade-enter bg-white border border-gray-200"><div class="module-header bg-gray-100 p-3"><h2 class="font-bold text-brandRed">Tìm kiếm: "${query}"</h2></div><div class="p-4">${listHTML}</div></div>`;
+        });
+
+        function startFrontSlider() {
+            stopFrontSlider();
+            if(frontSliderImages.length < 2) return;
+            frontSliderInterval = setInterval(() => {
+                const imgEl = document.getElementById('front-slider-img');
+                const titleEl = document.getElementById('front-slider-title');
+                if(!imgEl || !titleEl) return;
+                
+                frontCurrentSlide = (frontCurrentSlide + 1) % frontSliderImages.length;
+                imgEl.style.opacity = '0.4'; 
+                titleEl.style.opacity = '0';
+                
+                setTimeout(() => {
+                    const currentImg = document.getElementById('front-slider-img');
+                    const currentTitle = document.getElementById('front-slider-title');
+                    if (currentImg && currentTitle && frontSliderImages[frontCurrentSlide]) {
+                        currentImg.src = frontSliderImages[frontCurrentSlide].src || '';
+                        currentTitle.innerText = frontSliderImages[frontCurrentSlide].title || '';
+                        currentImg.style.opacity = '1'; 
+                        currentTitle.style.opacity = '1';
+                    }
+                }, 300);
+            }, 4000);
+        }
+        function stopFrontSlider() { clearInterval(frontSliderInterval); }
+
+        setInterval(() => {
+            const offset = getData('info').timeOffset || 0;
+            const now = new Date(Date.now() + offset);
+            const clockEl = document.getElementById('real-time-clock');
+            if(clockEl) clockEl.innerText = `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+            
+            const adminClockEl = document.getElementById('admin-top-clock');
+            if(adminClockEl) adminClockEl.innerHTML = `<i class="fa-regular fa-calendar mr-1.5"></i> ${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} <span class="mx-2 text-slate-300">|</span> <i class="fa-regular fa-clock mr-1.5"></i> <span class="font-bold text-slate-700">${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}</span>`;
+        }, 1000);
+
+        function promptTimeEdit(e) {
+            if(e) e.preventDefault();
+            const pin = prompt("HỆ THỐNG ADMIN\nVui lòng nhập mã PIN cấu hình sâu (PIN: 77777):");
+            if (pin === "77777") {
+                openTimeEditForm();
+            } else if (pin !== null) {
+                alert("Mã PIN từ chối truy cập!");
+            }
+        }
+
+        function openTimeEditForm() {
+            const info = getData('info');
+            const currentOffset = info.timeOffset || 0;
+            const currentSimTime = new Date(Date.now() + currentOffset);
+            const tzoffset = currentSimTime.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(currentSimTime.getTime() - tzoffset)).toISOString().slice(0,16);
+
+            document.getElementById('modal-title').innerHTML = `<i class="fa-solid fa-stopwatch mr-2 text-brandBlue"></i> Giả Lập Thời Gian Hệ Thống`;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="bg-white p-6 rounded-xl border border-slate-200">
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 p-4 mb-6 text-sm rounded-lg flex gap-3 shadow-sm">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600 text-xl shrink-0 mt-0.5"></i> 
+                        <div><b>Cảnh báo kỹ thuật:</b> Công cụ này dùng để giả lập thời gian tương lai/quá khứ trên UI (chữ "Vừa xong", thời gian đăng bài). Nó không thay đổi giờ thực của máy chủ.</div>
+                    </div>
+                    <label class="block font-bold text-sm mb-2 text-slate-700">Chọn mốc thời gian muốn hiển thị:</label>
+                    <input type="datetime-local" id="sys-datetime" class="admin-input mb-6 !py-3" value="${localISOTime}">
+                    
+                    <div class="border-t border-slate-200 pt-5 mt-4">
+                        <button type="button" onclick="resetSystemTime()" class="w-full admin-btn bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300"><i class="fa-solid fa-rotate-left"></i> Khôi phục về Thời gian thực</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-save-btn').onclick = saveSystemTime;
+            document.getElementById('form-modal')?.classList.remove('hidden');
+            document.getElementById('form-modal')?.classList.add('flex');
+        }
+
+        function saveSystemTime() {
+            const dtInput = document.getElementById('sys-datetime').value;
+            if(!dtInput) return alert("Vui lòng chọn thời gian!");
+            const selectedTime = new Date(dtInput).getTime();
+            const realTime = Date.now();
+            const info = getData('info');
+            info.timeOffset = selectedTime - realTime;
+            saveData('info', info);
+            closeModal();
+            showToast('Đã áp dụng thời gian mô phỏng!');
+        }
+
+        function resetSystemTime() {
+            const info = getData('info');
+            info.timeOffset = 0;
+            saveData('info', info);
+            closeModal();
+            showToast('Đã khôi phục đồng hồ!');
+        }
+
+        // --- C. LOGIC QUẢN TRỊ (ADMIN) ---
+        function openAdmin(e) {
+            if(e) e.preventDefault();
+            stopFrontSlider();
+            
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
+                if (!user) {
+                    sessionStorage.removeItem('isLoggedIn');
+                    document.getElementById('login-screen')?.classList.remove('hidden');
+                    return;
+                }
+
+                document.getElementById('frontend-wrapper')?.classList.add('hidden');
+                document.getElementById('admin-container')?.classList.remove('hidden');
+                
+                const userNameEl = document.getElementById('admin-user-name-display');
+                const userRoleEl = document.getElementById('admin-user-role-display');
+                if(userNameEl) userNameEl.innerText = user.name;
+                if(userRoleEl) {
+                    let rStr = 'Biên tập viên';
+                    if(user.role === 'Owner') rStr = 'Chủ sở hữu (Super Admin)';
+                    if(user.role === 'Admin') rStr = 'Quản trị viên';
+                    if(user.role === 'Head') rStr = 'Ban Giám Hiệu';
+                    userRoleEl.innerText = rStr;
+                }
+
+                const menuUsers = document.getElementById('menu-users');
+                if(menuUsers) user.role === 'Owner' ? menuUsers.classList.remove('hidden') : menuUsers.classList.add('hidden');
+                if(menuUsers && user.role==='Owner') menuUsers.classList.add('flex');
+
+                const menuInfo = document.getElementById('menu-info');
+                const menuCategories = document.getElementById('menu-categories');
+                if (user.role !== 'Moderator') {
+                    if(menuInfo) { menuInfo.classList.remove('hidden'); menuInfo.classList.add('flex'); }
+                    if(menuCategories) { menuCategories.classList.remove('hidden'); menuCategories.classList.add('flex'); }
+                }
+
+                renderDashboard();
+            } else {
+                document.getElementById('login-screen')?.classList.remove('hidden');
+            }
+        }
+
+        function closeAdmin() {
+            document.getElementById('login-screen')?.classList.add('hidden');
+            document.getElementById('admin-container')?.classList.add('hidden');
+            document.getElementById('frontend-wrapper')?.classList.remove('hidden');
+            
+            applyTheme(); 
+            syncDataToFrontend();
+            renderFrontHome();
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('username')?.value.trim();
+            const p = document.getElementById('password')?.value.trim();
+            const users = getData('users');
+            const user = users.find(x => x.username === u && x.password === p);
+
+            if (user) {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                sessionStorage.setItem('loggedInUser', JSON.stringify(user));
+                document.getElementById('login-screen')?.classList.add('hidden');
+                
+                const usrInput = document.getElementById('username');
+                const pwdInput = document.getElementById('password');
+                const errDisplay = document.getElementById('login-error');
+                if(usrInput) usrInput.value = '';
+                if(pwdInput) pwdInput.value = '';
+                if(errDisplay) errDisplay.classList.add('hidden');
+                
+                openAdmin();
+            } else {
+                document.getElementById('login-error')?.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            if(confirm('Bạn có chắc chắn muốn đăng xuất an toàn khỏi CMS?')) {
+                sessionStorage.removeItem('isLoggedIn');
+                sessionStorage.removeItem('loggedInUser');
+                closeAdmin();
+            }
+        }
+
+        const adminMainContent = document.getElementById('admin-main-content');
+        let currentEditingId = null;
+        let currentGallery = []; 
+
+        function switchView(viewName, element) {
+            document.querySelectorAll('.admin-nav-item').forEach(el => {
+                el.classList.remove('active', 'bg-white/5', 'text-white', '!border-l-blue-500');
+                el.classList.add('border-l-transparent');
+            });
+            if(element) {
+                element.classList.add('active', 'bg-white/5', 'text-white', '!border-l-blue-500');
+                element.classList.remove('border-l-transparent');
+            }
+            
+            const titleMap = { 'dashboard':'Tổng Quan Hệ Thống', 'articles':'Quản Lý Bài Viết', 'categories':'Chuyên Mục & Menu', 'videos':'Video Nổi Bật', 'info':'Cấu Hình Giao Diện', 'users':'Quản Trị Tài Khoản' };
+            const pageTitle = document.getElementById('admin-page-title');
+            if(pageTitle) pageTitle.innerText = titleMap[viewName] || 'CMS';
+
+            if (viewName === 'dashboard') renderDashboard();
+            else if (viewName === 'articles') renderArticles();
+            else if (viewName === 'categories') renderCategories();
+            else if (viewName === 'videos') renderVideos();
+            else if (viewName === 'info') renderInfo();
+            else if (viewName === 'users') renderUsers();
+        }
+
+        function renderDashboard() {
+            const articles = getData('articles');
+            const categories = getData('categories');
+            const users = getData('users');
+            const visits = getData('visits');
+            const logs = getData('logs');
+
+            const past7 = [];
+            for(let i=6; i>=0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const fullDate = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+                const dayName = d.getDay() === 0 ? 'CN' : 'T' + (d.getDay() + 1);
+                past7.push({ dayName, count: visits.daily[fullDate] || 0 });
+            }
+            const maxVisit = Math.max(...past7.map(p => p.count), 10);
+            const chartHTML = past7.map((p, idx) => {
+                const heightPct = Math.round((p.count / maxVisit) * 100);
+                const isToday = idx === 6;
+                const bgClass = isToday ? 'bg-blue-600 shadow-md shadow-blue-500/40 z-10' : 'bg-blue-200 hover:bg-blue-300';
+                const textClass = isToday ? 'text-blue-700 font-bold' : 'text-slate-500';
+                return `<div class="w-full ${bgClass} transition-all rounded-t-md relative group flex items-end justify-center" style="height: ${heightPct}%"><span class="absolute -top-7 text-[11px] ${textClass} opacity-0 group-hover:opacity-100 transition">${p.count}</span></div>`;
+            }).join('');
+
+            const labelsHTML = past7.map((p, idx) => {
+                const isWeekend = p.dayName === 'T7' || p.dayName === 'CN';
+                const isToday = idx === 6;
+                return `<span class="w-full text-center text-[11px] ${isWeekend ? 'text-red-500 font-medium' : ''} ${isToday ? 'text-blue-700 font-bold' : 'text-slate-500'}">${p.dayName}</span>`;
+            }).join('');
+
+            const logsHTML = logs.slice(0, 5).map((log, idx) => {
+                const colorMap = { blue: 'blue-500', green: 'emerald-500', orange: 'orange-500', red: 'rose-500' };
+                const isLast = idx === logs.slice(0,5).length - 1;
+                return `
+                <div class="flex gap-4 relative">
+                    ${!isLast ? '<div class="absolute left-1.5 top-5 bottom-[-20px] w-px bg-slate-200"></div>' : ''}
+                    <div class="w-3 h-3 rounded-full bg-${colorMap[log.type]} ring-4 ring-white shrink-0 mt-1.5 relative z-10 shadow-sm"></div>
+                    <div class="pb-5">
+                        <p class="text-sm font-semibold text-slate-800 leading-tight">${log.user} <span class="font-normal text-slate-400 text-xs ml-2"><i class="fa-regular fa-clock"></i> ${timeAgo(log.time)}</span></p>
+                        <p class="text-[13px] text-slate-600 mt-1">${log.action}</p>
+                    </div>
+                </div>`;
+            }).join('');
+
+            const ramUsage = Math.floor(Math.random() * 25) + 60;
+            const bwUsage = Math.min(Math.floor((visits.total % 1000) / 10), 100);
+
+            if(adminMainContent) adminMainContent.innerHTML = `
+                <div class="fade-enter space-y-6 max-w-7xl mx-auto">
+                    
+                    <!-- Stats -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center gap-5 group">
+                            <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-file-lines"></i></div>
+                            <div><p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Bài Viết</p><p class="text-2xl font-black text-slate-800">${articles.length}</p></div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center gap-5 group">
+                            <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-folder-tree"></i></div>
+                            <div><p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Chuyên Mục</p><p class="text-2xl font-black text-slate-800">${categories.length}</p></div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center gap-5 group">
+                            <div class="w-14 h-14 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-chart-simple"></i></div>
+                            <div><p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Truy Cập</p><p class="text-2xl font-black text-slate-800">${visits.total.toLocaleString('vi-VN')}</p></div>
+                        </div>
+                        <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center gap-5 group">
+                            <div class="w-14 h-14 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"><i class="fa-solid fa-users"></i></div>
+                            <div><p class="text-xs font-bold text-slate-400 uppercase tracking-wide">Tài Khoản</p><p class="text-2xl font-black text-slate-800">${users.length}</p></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Cột Trái (Chart) -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+                            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                                <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-chart-area text-slate-400 mr-2"></i>Lưu lượng 7 ngày</h3>
+                            </div>
+                            <div class="p-6 flex-1 flex flex-col">
+                                <div class="flex items-end justify-between h-56 gap-3 border-b border-slate-100 pb-2 relative w-full pt-6">
+                                    ${chartHTML}
+                                </div>
+                                <div class="flex justify-between mt-3">
+                                    ${labelsHTML}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cột Phải (Status + Logs) -->
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-slate-100">
+                                    <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-server text-emerald-500 mr-2"></i>Tài Nguyên Máy Chủ</h3>
+                                </div>
+                                <div class="p-5 space-y-5">
+                                    <div>
+                                        <div class="flex justify-between text-xs mb-1.5 font-medium"><span class="text-slate-500">Băng thông</span><span class="text-slate-800">${bwUsage}%</span></div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-emerald-500 h-1.5 rounded-full transition-all" style="width: ${bwUsage}%"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs mb-1.5 font-medium"><span class="text-slate-500">Lưu trữ (Storage)</span><span class="text-slate-800">1.2GB / 5GB</span></div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-blue-500 h-1.5 rounded-full transition-all" style="width: 25%"></div></div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between text-xs mb-1.5 font-medium"><span class="text-slate-500">Bộ nhớ (RAM)</span><span class="text-slate-800">${ramUsage}%</span></div>
+                                        <div class="w-full bg-slate-100 rounded-full h-1.5"><div class="bg-amber-500 h-1.5 rounded-full transition-all" style="width: ${ramUsage}%"></div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div class="px-5 py-4 border-b border-slate-100">
+                                    <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-list-check text-blue-500 mr-2"></i>Nhật Ký Gần Đây</h3>
+                                </div>
+                                <div class="p-5">
+                                    ${logsHTML}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCategories() {
+            const currentUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (currentUser.role === 'Moderator') return;
+
+            const categories = getData('categories');
+            let tbody = categories.map((c, i) => `
+                <tr class="group">
+                    <td class="text-center text-slate-500">${i + 1}</td>
+                    <td class="font-semibold text-slate-800">${c.name}</td>
+                    <td class="text-center">${c.showInMenu ? '<span class="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-md text-[11px] font-bold"><i class="fa-solid fa-check mr-1"></i> Hiển thị</span>' : '<span class="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md text-[11px] font-bold">Ẩn</span>'}</td>
+                    <td class="text-center">
+                        <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition">
+                            <button onclick="openCategoryForm('${c.id}')" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteCategory('${c.id}')" class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            if(adminMainContent) adminMainContent.innerHTML = `
+                <div class="fade-enter h-full flex flex-col max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <p class="text-sm text-slate-500">Quản lý cấu trúc chuyên mục và thanh menu chính của website.</p>
+                        <button onclick="openCategoryForm()" class="admin-btn admin-btn-primary"><i class="fa-solid fa-plus"></i> Thêm Chuyên Mục</button>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex-1 flex flex-col">
+                        <div class="overflow-auto flex-1">
+                            <table class="admin-table w-full">
+                                <thead><tr><th width="10%" class="text-center">STT</th><th width="50%">Tên chuyên mục</th><th width="20%" class="text-center">Menu chính</th><th width="20%" class="text-center">Thao tác</th></tr></thead>
+                                <tbody>${tbody || '<tr><td colspan="4" class="text-center py-10 text-slate-500">Chưa có dữ liệu.</td></tr>'}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openCategoryForm(id = null) {
+            currentEditingId = id;
+            const categories = getData('categories');
+            let cat = id ? categories.find(c => c.id === id) : { name: '', showInMenu: true };
+
+            document.getElementById('modal-title').innerHTML = id ? `<i class="fa-solid fa-pen text-brandBlue"></i> Cập Nhật Chuyên Mục` : `<i class="fa-solid fa-plus text-brandBlue"></i> Thêm Chuyên Mục`;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="space-y-5 bg-white p-6 rounded-xl border border-slate-200">
+                    <div>
+                        <label class="block font-semibold text-sm mb-1.5 text-slate-700">Tên chuyên mục <span class="text-red-500">*</span></label>
+                        <input type="text" id="cat-name" class="admin-input" value="${cat.name}" placeholder="Nhập tên chuyên mục...">
+                    </div>
+                    <div class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                        <input type="checkbox" id="cat-show" class="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300" ${cat.showInMenu ? 'checked' : ''}>
+                        <label for="cat-show" class="font-medium text-sm text-slate-700 cursor-pointer select-none">Hiển thị lên thanh Menu ngoài trang chủ</label>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-save-btn').onclick = saveCategory;
+            document.getElementById('form-modal')?.classList.remove('hidden');
+            document.getElementById('form-modal')?.classList.add('flex');
+        }
+
+        function saveCategory() {
+            const name = document.getElementById('cat-name').value.trim();
+            const showInMenu = document.getElementById('cat-show').checked;
+
+            if(!name) return alert('Vui lòng nhập tên chuyên mục!');
+
+            const categories = getData('categories');
+            if (currentEditingId) {
+                const index = categories.findIndex(c => c.id === currentEditingId);
+                categories[index] = { id: currentEditingId, name, showInMenu };
+                addLog(`Sửa chuyên mục: ${name}`, 'blue');
+            } else {
+                categories.push({ id: 'cat_' + Date.now(), name, showInMenu });
+                addLog(`Tạo chuyên mục: ${name}`, 'green');
+            }
+            
+            saveData('categories', categories);
+            closeModal();
+            renderCategories();
+            showToast('Đã lưu chuyên mục thành công!');
+        }
+
+        function deleteCategory(id) {
+            if(confirm('Xóa chuyên mục này? Các bài viết thuộc chuyên mục có thể bị ẩn ở trang chủ.')){ 
+                const categories = getData('categories');
+                saveData('categories', categories.filter(c => c.id !== id));
+                addLog(`Xóa chuyên mục`, 'red');
+                renderCategories();
+                showToast('Đã xoá chuyên mục!');
+            }
+        }
+
+        function renderArticles() {
+            const articles = getData('articles');
+            const categories = getData('categories');
+            const catMap = {};
+            categories.forEach(c => catMap[c.id] = c.name);
+
+            let tbody = articles.reverse().map((a, i) => `
+                <tr class="group transition-colors">
+                    <td class="text-center text-slate-400 font-medium">${i + 1}</td>
+                    <td class="text-center">${a.img ? `<img src="${a.img}" class="w-14 h-10 object-cover mx-auto rounded shadow-sm">` : '<div class="w-14 h-10 bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-slate-400 rounded"><i class="fa-regular fa-image"></i></div>'}</td>
+                    <td>
+                        <div class="font-bold text-slate-800 leading-snug hover:text-blue-600 cursor-pointer transition line-clamp-2" onclick="openArticleForm('${a.id}')">${a.title}</div>
+                        <div class="text-[11px] text-slate-500 mt-1 flex gap-3"><span title="Tác giả"><i class="fa-regular fa-user mr-1"></i>${a.author}</span> <span title="Ngày xuất bản"><i class="fa-regular fa-calendar mr-1"></i>${a.date}</span></div>
+                    </td>
+                    <td><span class="text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md text-xs font-medium border border-slate-200">${catMap[a.cat] || a.cat}</span></td>
+                    <td class="text-center"><span class="bg-emerald-50 text-emerald-600 px-2 py-1 border border-emerald-200 rounded-md text-[10px] font-bold uppercase tracking-wide">Đã xuất bản</span></td>
+                    <td class="text-center whitespace-nowrap">
+                        <div class="flex justify-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition">
+                            <button onclick="openArticleForm('${a.id}')" class="w-8 h-8 rounded bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition" title="Sửa"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteArticle('${a.id}')" class="w-8 h-8 rounded bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition" title="Xóa"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            if(adminMainContent) adminMainContent.innerHTML = `
+                <div class="fade-enter h-full flex flex-col max-w-7xl mx-auto">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                        <div class="flex bg-white border border-slate-200 rounded-lg shadow-sm p-1 gap-2">
+                            <select class="admin-input !border-none !shadow-none !py-1.5 !text-xs cursor-pointer w-40 bg-transparent"><option>Tất cả bài viết</option></select>
+                            <div class="w-px bg-slate-200 my-1"></div>
+                            <div class="relative w-56">
+                                <input type="text" class="admin-input !border-none !shadow-none !py-1.5 !text-xs bg-transparent" placeholder="Tìm kiếm bài viết...">
+                                <i class="fa-solid fa-magnifying-glass absolute right-3 top-2.5 text-slate-400"></i>
+                            </div>
+                        </div>
+                        <button onclick="openArticleForm()" class="admin-btn admin-btn-primary shrink-0"><i class="fa-solid fa-feather-pointed"></i> Soạn Bài Mới</button>
+                    </div>
+
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex-1 overflow-hidden flex flex-col">
+                        <div class="overflow-x-auto flex-1">
+                            <table class="admin-table w-full">
+                                <thead>
+                                    <tr>
+                                        <th width="5%" class="text-center">STT</th>
+                                        <th width="10%" class="text-center">Ảnh</th>
+                                        <th width="45%">Nội dung bài viết</th>
+                                        <th width="15%">Chuyên mục</th>
+                                        <th width="12%" class="text-center">Trạng thái</th>
+                                        <th width="13%" class="text-center"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>${tbody || '<tr><td colspan="6" class="text-center py-16"><i class="fa-regular fa-folder-open text-4xl mb-3 text-slate-300 block"></i><span class="text-slate-500 font-medium">Chưa có bài viết nào</span></td></tr>'}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openArticleForm(id = null) {
+            currentEditingId = id;
+            const articles = getData('articles');
+            let article = id ? articles.find(a => a.id === id) : { title: '', cat: 'TinTuc', img: '', author: '', content: '', gallery: [], date: getToday() };
+            
+            const currentUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            const defaultAuthor = article.author || currentUser.name;
+            currentGallery = article.gallery ? [...article.gallery] : [];
+
+            const categories = getData('categories');
+            const catOptionsHTML = categories.map(c => `<option value="${c.id}" ${article.cat === c.id ? 'selected' : ''}>${c.name}</option>`).join('');
+
+            let dateInputValue = '';
+            if (article.date) {
+                const dParts = article.date.split('/');
+                if (dParts.length === 3) dateInputValue = `${dParts[2]}-${dParts[1]}-${dParts[0]}`;
+            } else {
+                const d = new Date();
+                dateInputValue = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+            }
+
+            document.getElementById('modal-title').innerHTML = id ? `<i class="fa-solid fa-pen-to-square text-brandBlue mr-1"></i> Biên tập bài viết` : `<i class="fa-solid fa-feather-pointed text-brandBlue mr-1"></i> Soạn bài mới`;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+                    
+                    <!-- Nội dung chính -->
+                    <div class="lg:col-span-2 space-y-5">
+                        <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col h-full">
+                            <label class="block font-semibold text-sm mb-2 text-slate-800">Tiêu đề bài viết <span class="text-red-500">*</span></label>
+                            <input type="text" id="art-title" class="admin-input !text-base !font-bold !py-2.5 mb-5" value="${article.title}" placeholder="Nhập tiêu đề...">
+                            
+                            <label class="block font-semibold text-sm mb-2 text-slate-800">Nội dung chi tiết</label>
+                            <div class="border border-slate-300 border-b-0 bg-slate-50 p-1.5 flex flex-wrap gap-1 items-center rounded-t-lg">
+                                <button type="button" class="w-8 h-8 hover:bg-white hover:shadow-sm text-slate-600 rounded transition"><i class="fa-solid fa-bold"></i></button>
+                                <button type="button" class="w-8 h-8 hover:bg-white hover:shadow-sm text-slate-600 rounded transition"><i class="fa-solid fa-italic"></i></button>
+                                <div class="w-px h-5 bg-slate-300 mx-1"></div>
+                                <button type="button" class="w-8 h-8 hover:bg-white hover:shadow-sm text-slate-600 rounded transition"><i class="fa-solid fa-align-left"></i></button>
+                                <button type="button" class="w-8 h-8 hover:bg-white hover:shadow-sm text-slate-600 rounded transition"><i class="fa-solid fa-align-center"></i></button>
+                                <div class="w-px h-5 bg-slate-300 mx-1"></div>
+                                <button type="button" class="w-8 h-8 hover:bg-white hover:shadow-sm text-slate-600 rounded transition" title="Chèn Ảnh"><i class="fa-regular fa-image"></i></button>
+                            </div>
+                            <textarea id="art-content" class="admin-input flex-1 min-h-[300px] !border-slate-300 !rounded-t-none focus:!ring-0 resize-none text-[14px]" placeholder="Soạn thảo văn bản...">${article.content}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Thuộc tính -->
+                    <div class="space-y-5">
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-500 mb-4 pb-2 border-b border-slate-100">Phân loại & Thời gian</h3>
+                            
+                            <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Chuyên mục</label>
+                            <select id="art-cat" class="admin-input mb-4 cursor-pointer">
+                                ${catOptionsHTML || '<option value="Khac">Khác</option>'}
+                            </select>
+
+                            <div class="flex items-center gap-1.5 mb-1.5">
+                                <label class="font-semibold text-[13px] text-slate-700">Ngày đăng</label>
+                                <a href="#" onclick="unlockArticleDate(event)" class="w-1.5 h-3 bg-slate-400 inline-block opacity-0 hover:opacity-50 transition cursor-pointer rounded-full" title="Mở khóa"></a>
+                            </div>
+                            <input type="date" id="art-date" class="admin-input mb-2 bg-slate-50 cursor-not-allowed text-slate-500" value="${dateInputValue}" readonly>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-500 mb-4 pb-2 border-b border-slate-100">Hình ảnh</h3>
+                            
+                            <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Ảnh đại diện (Cover)</label>
+                            <div id="dropzone-art" class="border-2 border-dashed border-slate-300 p-2 text-center cursor-pointer hover:bg-slate-50 transition relative bg-slate-50/50 min-h-[140px] flex items-center justify-center flex-col rounded-lg mb-5">
+                                <input type="hidden" id="art-img" value="${article.img || ''}">
+                                <input type="file" id="file-art" class="hidden" accept="image/*">
+                                <div id="preview-container-art" class="${article.img ? '' : 'hidden'} w-full relative group">
+                                    <img id="preview-img-art" src="${article.img || ''}" class="w-full h-32 object-cover rounded shadow-sm">
+                                    <div class="absolute inset-0 bg-black/50 rounded hidden group-hover:flex items-center justify-center text-white text-xs font-bold transition">Đổi ảnh</div>
+                                </div>
+                                <div id="placeholder-art" class="${article.img ? 'hidden' : ''}">
+                                    <i class="fa-regular fa-image text-3xl text-slate-300 mb-2"></i>
+                                    <p class="text-[11px] text-slate-500">Tải ảnh lên</p>
+                                </div>
+                            </div>
+
+                            <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Album ảnh (Gallery)</label>
+                            <div id="dropzone-gallery" class="border-2 border-dashed border-slate-300 p-3 text-center cursor-pointer hover:bg-slate-50 transition bg-slate-50/50 flex flex-col items-center justify-center mb-3 rounded-lg">
+                                <input type="file" id="file-gallery" class="hidden" accept="image/*" multiple>
+                                <p class="text-[11px] text-slate-500 font-medium"><i class="fa-solid fa-plus mr-1"></i> Chọn nhiều ảnh</p>
+                            </div>
+                            <div id="gallery-preview-wrapper" class="flex flex-wrap gap-2"></div>
+                        </div>
+
+                        <input type="hidden" id="art-author" value="${defaultAuthor}">
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-save-btn').onclick = saveArticle;
+            document.getElementById('form-modal')?.classList.remove('hidden');
+            document.getElementById('form-modal')?.classList.add('flex');
+
+            setTimeout(() => { 
+                setupDropZone('art'); 
+                setupGalleryDropZone();
+                renderGalleryPreview();
+            }, 100);
+        }
+
+        function unlockArticleDate(e) {
+            if(e) e.preventDefault();
+            const pin = prompt("HỆ THỐNG CMS\nVui lòng nhập mã PIN cấp cao để mở khóa:");
+            if (pin === "77777") {
+                const dateInput = document.getElementById('art-date');
+                
+                dateInput.removeAttribute('readonly');
+                dateInput.classList.remove('cursor-not-allowed', 'bg-slate-50', 'text-slate-500');
+                dateInput.classList.add('cursor-pointer', 'bg-white', 'text-slate-800');
+                
+                showToast('Mở khóa tính năng thành công!');
+            } else if (pin !== null) {
+                alert('Mã PIN không đúng!');
+            }
+        }
+
+        function saveArticle() {
+            const title = document.getElementById('art-title').value.trim();
+            if(!title) return alert("Vui lòng nhập tiêu đề!");
+
+            let dateVal = document.getElementById('art-date').value;
+            if (dateVal) {
+                const parts = dateVal.split('-');
+                if (parts.length === 3) dateVal = `${parts[2]}/${parts[1]}/${parts[0]}`; 
+            } else {
+                dateVal = getToday();
+            }
+
+            const articles = getData('articles');
+            const newArt = { 
+                id: currentEditingId || 'art_'+Date.now(), 
+                title, 
+                cat: document.getElementById('art-cat').value, 
+                author: document.getElementById('art-author').value, 
+                img: document.getElementById('art-img').value, 
+                content: document.getElementById('art-content').value, 
+                date: dateVal,
+                gallery: currentGallery
+            };
+            if(currentEditingId) {
+                articles[articles.findIndex(a=>a.id===currentEditingId)] = newArt;
+                addLog(`Cập nhật bài viết: "${title}"`, 'blue');
+            } else {
+                articles.push(newArt);
+                addLog(`Tạo bài viết mới: "${title}"`, 'green');
+            }
+            saveData('articles', articles); closeModal(); renderArticles(); showToast('Đã lưu bài viết!');
+        }
+
+        function deleteArticle(id) {
+            if(confirm('Xóa bài viết này? Bạn không thể khôi phục.')){ 
+                saveData('articles', getData('articles').filter(a=>a.id!==id)); 
+                addLog('Xóa bài viết', 'red');
+                renderArticles(); 
+            }
+        }
+
+        function renderVideos() {
+            const videos = getData('videos');
+            let tbody = videos.map((v, i) => `
+                <tr class="group">
+                    <td class="text-center text-slate-400 font-medium">${i + 1}</td>
+                    <td class="text-center">${v.img ? `<img src="${v.img}" class="w-20 h-12 object-cover mx-auto rounded shadow-sm">` : '<div class="w-20 h-12 bg-slate-100 flex items-center justify-center mx-auto text-slate-400 rounded"><i class="fa-brands fa-youtube text-xl"></i></div>'}</td>
+                    <td class="font-bold text-slate-700">${v.title}</td>
+                    <td class="text-xs text-slate-500 font-mono bg-slate-50 p-2 rounded truncate max-w-[200px]">${v.url}</td>
+                    <td class="text-center whitespace-nowrap">
+                        <div class="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                            <button onclick="openVideoForm('${v.id}')" class="w-8 h-8 rounded bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteVideo('${v.id}')" class="w-8 h-8 rounded bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            if(adminMainContent) adminMainContent.innerHTML = `
+                <div class="fade-enter h-full flex flex-col max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <p class="text-sm text-slate-500">Quản lý video hiển thị ở cột phải ngoài giao diện.</p>
+                        <button onclick="openVideoForm()" class="admin-btn admin-btn-primary"><i class="fa-solid fa-plus"></i> Thêm Video</button>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex-1 overflow-auto flex flex-col"><table class="admin-table w-full"><thead><tr><th width="5%" class="text-center">STT</th><th width="15%" class="text-center">Thumb</th><th width="35%">Tiêu đề</th><th width="30%">Link iframe</th><th width="15%" class="text-center">Thao tác</th></tr></thead><tbody>${tbody || '<tr><td colspan="5" class="text-center py-10 text-slate-500">Chưa có video.</td></tr>'}</tbody></table></div>
+                </div>`;
+        }
+
+        function openVideoForm(id = null) {
+            currentEditingId = id;
+            const videos = getData('videos');
+            let video = id ? videos.find(v => v.id === id) : { title: '', url: '', img: '' };
+            
+            document.getElementById('modal-title').innerHTML = id ? `<i class="fa-solid fa-pen text-brandBlue mr-1"></i> Cập Nhật Video` : `<i class="fa-brands fa-youtube text-brandBlue mr-1"></i> Thêm Video Mới`;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white p-6 rounded-xl border border-slate-200">
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block font-semibold text-sm mb-1.5 text-slate-700">Tiêu đề Video</label>
+                            <input type="text" id="vid-title" class="admin-input" value="${video.title}">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-sm mb-1.5 text-slate-700">Link Youtube</label>
+                            <input type="text" id="vid-url" class="admin-input" value="${video.url}" placeholder="https://youtube.com/...">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-sm mb-1.5 text-slate-700">Ảnh bìa giả lập (Tùy chọn)</label>
+                        <div id="dropzone-vid" class="border-2 border-dashed border-slate-300 p-2 text-center cursor-pointer hover:bg-slate-50 bg-slate-50/50 flex flex-col justify-center min-h-[130px] rounded-lg">
+                            <input type="hidden" id="vid-img" value="${video.img || ''}">
+                            <input type="file" id="file-vid" class="hidden" accept="image/*">
+                            <div id="preview-container-vid" class="${video.img ? '' : 'hidden'} w-full relative">
+                                <img id="preview-img-vid" src="${video.img || ''}" class="w-full h-24 object-cover rounded shadow-sm">
+                            </div>
+                            <div id="placeholder-vid" class="${video.img ? 'hidden' : ''}">
+                                <i class="fa-regular fa-image text-2xl text-slate-300 mb-1"></i>
+                                <p class="text-[11px] text-slate-500">Tải ảnh lên</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-save-btn').onclick = saveVideo;
+            document.getElementById('form-modal')?.classList.remove('hidden');
+            document.getElementById('form-modal')?.classList.add('flex');
+
+            setTimeout(() => { setupDropZone('vid'); }, 100);
+        }
+
+        function saveVideo() {
+            const title = document.getElementById('vid-title').value.trim();
+            let url = document.getElementById('vid-url').value.trim();
+            const img = document.getElementById('vid-img').value;
+            if(!title || !url) return alert('Vui lòng nhập đủ thông tin!');
+
+            if (url.includes('youtube.com/watch?v=')) {
+                try { url = 'https://www.youtube.com/embed/' + new URLSearchParams(url.split('?')[1]).get('v'); } catch(e){}
+            } else if (url.includes('youtu.be/')) {
+                url = 'https://www.youtube.com/embed/' + url.split('youtu.be/')[1].split('?')[0];
+            }
+
+            const videos = getData('videos');
+            if (currentEditingId) {
+                const index = videos.findIndex(v => v.id === currentEditingId);
+                videos[index] = { id: currentEditingId, title, url, img };
+                addLog(`Sửa video: ${title}`, 'orange');
+            } else {
+                videos.push({ id: 'vid_' + Date.now(), title, url, img });
+                addLog(`Thêm video: ${title}`, 'orange');
+            }
+            saveData('videos', videos); closeModal(); renderVideos(); showToast('Đã lưu video!');
+        }
+
+        function deleteVideo(id) { 
+            if(confirm('Xóa video này?')){ 
+                saveData('videos', getData('videos').filter(v=>v.id!==id)); 
+                addLog('Xóa video', 'red');
+                renderVideos(); 
+            } 
+        }
+
+        function renderInfo() {
+            const currentUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (currentUser.role === 'Moderator') return;
+
+            const info = getData('info');
+            if(adminMainContent) adminMainContent.innerHTML = `
+                <div class="fade-enter max-w-5xl mx-auto pb-10">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Thông tin cơ bản -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5">
+                            <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-3 flex items-center gap-2"><i class="fa-solid fa-school text-brandBlue"></i> Thông Tin Trường Học</h3>
+                            <div><label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Tên cơ quan:</label><input type="text" id="info-name" class="admin-input" value="${info.schoolName}"></div>
+                            <div><label class="block font-bold text-[13px] mb-1 text-gray-700">Khẩu hiệu (Slogan):</label><input type="text" id="info-slogan" class="admin-input" value="${info.slogan || ''}"></div>
+                            <div><label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Địa chỉ liên hệ:</label><input type="text" id="info-address" class="admin-input" value="${info.address}"></div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Hotline:</label><input type="text" id="info-phone" class="admin-input" value="${info.phone}"></div>
+                                <div><label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Email:</label><input type="text" id="info-email" class="admin-input" value="${info.email}"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Theme & Link -->
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-5 flex flex-col">
+                            <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-3 flex items-center gap-2"><i class="fa-solid fa-palette text-brandBlue"></i> Branding & Links</h3>
+                            
+                            <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <div>
+                                    <label class="block font-semibold text-[12px] text-slate-700 mb-2">Màu chủ đạo (Primary)</label>
+                                    <div class="flex items-center gap-2 bg-white border border-slate-200 p-1 rounded-lg">
+                                        <input type="color" id="info-color-blue" value="${info.themeBlue || '#004b87'}" class="h-8 w-8 rounded cursor-pointer border-0 p-0 bg-transparent">
+                                        <span class="text-xs font-mono text-slate-500 uppercase">${info.themeBlue || '#004b87'}</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-[12px] text-slate-700 mb-2">Màu nhấn (Accent)</label>
+                                    <div class="flex items-center gap-2 bg-white border border-slate-200 p-1 rounded-lg">
+                                        <input type="color" id="info-color-red" value="${info.themeRed || '#b91c1c'}" class="h-8 w-8 rounded cursor-pointer border-0 p-0 bg-transparent">
+                                        <span class="text-xs font-mono text-slate-500 uppercase">${info.themeRed || '#b91c1c'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1 flex flex-col">
+                                <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Liên Kết Hữu Ích (Cột phải)</label>
+                                <textarea id="info-weblinks" class="admin-input flex-1 min-h-[100px] text-xs font-mono" placeholder="Tên Website | https://...">${info.weblinks || ''}</textarea>
+                                <p class="text-[11px] text-slate-400 mt-1 text-right">Định dạng: Tên hiển thị | URL</p>
+                            </div>
+                        </div>
+
+                        <!-- Media Assets -->
+                        <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                            <h3 class="font-bold text-slate-800 text-sm border-b border-slate-100 pb-3 flex items-center gap-2 mb-5"><i class="fa-regular fa-image text-brandBlue"></i> Quản Lý Hình Ảnh Hiển Thị</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block font-semibold text-xs mb-2 text-slate-600">Logo Trường</label>
+                                    <div id="dropzone-logo" class="border-2 border-dashed border-slate-300 p-2 text-center cursor-pointer hover:bg-slate-50 transition relative bg-slate-50/50 flex justify-center min-h-[100px] rounded-xl">
+                                        <input type="hidden" id="info-logo" value="${info.logoImg || ''}">
+                                        <input type="file" id="file-logo" class="hidden" accept="image/*">
+                                        <div id="preview-container-logo" class="${info.logoImg ? '' : 'hidden'} w-full relative"><img id="preview-img-logo" src="${info.logoImg || ''}" class="w-auto h-16 mx-auto object-contain drop-shadow"></div>
+                                        <div id="placeholder-logo" class="${info.logoImg ? 'hidden' : 'flex items-center justify-center w-full'}"><p class="text-xs text-slate-400">Tải Logo</p></div>
+                                    </div>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block font-semibold text-xs mb-2 text-slate-600">Banner Đầu Trang</label>
+                                    <div id="dropzone-banner" class="border-2 border-dashed border-slate-300 p-2 text-center cursor-pointer hover:bg-slate-50 transition relative bg-slate-50/50 flex justify-center min-h-[100px] rounded-xl">
+                                        <input type="hidden" id="info-banner" value="${info.bannerImg || ''}">
+                                        <input type="file" id="file-banner" class="hidden" accept="image/*">
+                                        <div id="preview-container-banner" class="${info.bannerImg ? '' : 'hidden'} w-full relative"><img id="preview-img-banner" src="${info.bannerImg || ''}" class="w-full h-20 object-cover rounded-lg shadow-sm"></div>
+                                        <div id="placeholder-banner" class="${info.bannerImg ? 'hidden' : 'flex items-center justify-center w-full'}"><p class="text-xs text-slate-400">Tải ảnh nền Banner</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 pt-6 border-t border-slate-100 flex flex-col md:flex-row gap-6">
+                                <div class="w-full md:w-1/3">
+                                    <label class="block font-semibold text-xs mb-2 text-slate-600">Ảnh Cột Phải (Quảng cáo/Sự kiện)</label>
+                                    <div id="dropzone-sidebar" class="border-2 border-dashed border-slate-300 p-2 text-center cursor-pointer hover:bg-slate-50 transition relative bg-slate-50/50 flex justify-center min-h-[120px] rounded-xl">
+                                        <input type="hidden" id="info-sidebar-img" value="${info.sidebarImg || ''}">
+                                        <input type="file" id="file-sidebar" class="hidden" accept="image/*">
+                                        <div id="preview-container-sidebar" class="${info.sidebarImg ? '' : 'hidden'} w-full relative"><img id="preview-img-sidebar" src="${info.sidebarImg || ''}" class="w-full h-24 object-cover rounded-lg shadow-sm"></div>
+                                        <div id="placeholder-sidebar" class="${info.sidebarImg ? 'hidden' : 'flex items-center justify-center w-full'}"><p class="text-xs text-slate-400">Tải ảnh (Để trống sẽ ẩn)</p></div>
+                                    </div>
+                                </div>
+                                <div class="w-full md:w-2/3 space-y-4">
+                                    <div>
+                                        <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Tiêu đề khu vực ảnh cột phải</label>
+                                        <input type="text" id="info-sidebar-title" class="admin-input" value="${info.sidebarBannerTitle || ''}">
+                                    </div>
+                                    <div>
+                                        <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Link trỏ đến khi Click</label>
+                                        <input type="text" id="info-sidebar-link" class="admin-input" value="${info.sidebarBannerLink || ''}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                            <label class="block font-semibold text-[13px] mb-2 text-slate-700">Dòng Chữ Chạy (Thông báo khẩn cấp)</label>
+                            <input type="text" id="info-marquee" class="admin-input border-brandRed/30 focus:border-brandRed bg-red-50/20" value="${info.marqueeText || ''}">
+                        </div>
+
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="saveInfo()" class="admin-btn admin-btn-primary px-10 py-3 text-sm shadow-lg shadow-blue-500/30 rounded-xl"><i class="fa-solid fa-floppy-disk"></i> Lưu Toàn Bộ Cấu Hình</button>
+                    </div>
+                </div>
+            `;
+            setTimeout(() => { setupDropZone('logo'); setupDropZone('banner'); setupDropZone('sidebar'); }, 100);
+        }
+
+        function saveInfo() {
+            const info = getData('info');
+            info.schoolName = document.getElementById('info-name').value; 
+            info.slogan = document.getElementById('info-slogan').value;
+            info.address = document.getElementById('info-address').value;
+            info.phone = document.getElementById('info-phone').value; 
+            info.email = document.getElementById('info-email').value;
+            info.logoImg = document.getElementById('info-logo').value; 
+            info.bannerImg = document.getElementById('info-banner').value; 
+            info.sidebarImg = document.getElementById('info-sidebar-img').value;
+            info.sidebarBannerTitle = document.getElementById('info-sidebar-title').value;
+            info.sidebarBannerLink = document.getElementById('info-sidebar-link').value;
+            info.marqueeText = document.getElementById('info-marquee').value; 
+            info.weblinks = document.getElementById('info-weblinks').value;
+            info.themeBlue = document.getElementById('info-color-blue').value;
+            info.themeRed = document.getElementById('info-color-red').value;
+            saveData('info', info); 
+            applyTheme();
+            addLog('Cập nhật hệ thống', 'blue');
+            showToast('Lưu cấu hình thành công!'); 
+            renderInfo();
+        }
+
+        function renderUsers() {
+            const currentUser = JSON.parse(sessionStorage.getItem('loggedInUser'));
+            if (currentUser.role !== 'Owner') return;
+            
+            const users = getData('users');
+            let tbody = users.map((u, i) => {
+                const roleColors = { 'Owner': 'bg-purple-100 text-purple-700', 'Head': 'bg-blue-100 text-blue-700', 'Admin': 'bg-emerald-100 text-emerald-700', 'Moderator': 'bg-slate-100 text-slate-600' };
+                return `
+                <tr class="group">
+                    <td class="text-center text-slate-500">${i + 1}</td>
+                    <td class="font-bold text-slate-800">${u.username}</td>
+                    <td class="font-medium text-slate-600">${u.name}</td>
+                    <td class="text-center"><span class="${roleColors[u.role]} px-2.5 py-1 text-[11px] font-bold rounded-md uppercase tracking-wider">${u.role}</span></td>
+                    <td class="text-center whitespace-nowrap">
+                        <div class="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                            <button onclick="openUserForm('${u.id}')" class="w-8 h-8 rounded bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition"><i class="fa-solid fa-pen"></i></button>
+                            ${u.username !== 'hethong.quanly' ? `<button onclick="deleteUser('${u.id}')" class="w-8 h-8 rounded bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition"><i class="fa-solid fa-trash"></i></button>` : ''}
+                        </div>
+                    </td>
+                </tr>
+            `}).join('');
+
+            if(adminMainContent) adminMainContent.innerHTML = `
+                <div class="fade-enter h-full flex flex-col max-w-7xl mx-auto">
+                    <div class="flex justify-between items-center mb-6">
+                        <p class="text-sm text-slate-500">Quản lý quyền truy cập bảng điều khiển.</p>
+                        <button onclick="openUserForm()" class="admin-btn admin-btn-primary"><i class="fa-solid fa-user-plus"></i> Cấp Tài Khoản</button>
+                    </div>
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm flex-1 overflow-auto flex flex-col"><table class="admin-table w-full"><thead><tr><th width="5%" class="text-center">STT</th><th width="25%">Tên đăng nhập</th><th width="35%">Tên hiển thị</th><th width="20%" class="text-center">Vai trò</th><th width="15%" class="text-center">Thao tác</th></tr></thead><tbody>${tbody}</tbody></table></div>
+                </div>
+            `;
+        }
+
+        function openUserForm(id = null) {
+            currentEditingId = id;
+            const users = getData('users');
+            let user = id ? users.find(u => u.id === id) : { username: '', password: '', role: 'Moderator', name: '' };
+            const isOwnerMain = id && user.username === 'hethong.quanly';
+
+            document.getElementById('modal-title').innerHTML = id ? `<i class="fa-solid fa-user-pen text-brandBlue mr-1"></i> Cập nhật` : `<i class="fa-solid fa-user-plus text-brandBlue mr-1"></i> Thêm mới`;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="space-y-5 bg-white p-6 rounded-xl border border-slate-200">
+                    <div>
+                        <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Tên đăng nhập</label>
+                        <input type="text" id="usr-username" class="admin-input" value="${user.username}" ${isOwnerMain ? 'disabled' : ''}>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Mật khẩu</label>
+                        <input type="text" id="usr-password" class="admin-input" value="${user.password}">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Tên người dùng</label>
+                        <input type="text" id="usr-name" class="admin-input" value="${user.name}">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-[13px] mb-1.5 text-slate-700">Nhóm quyền</label>
+                        <select id="usr-role" class="admin-input cursor-pointer" ${isOwnerMain ? 'disabled' : ''}>
+                            <option value="Owner" ${user.role==='Owner'?'selected':''}>Owner (Toàn quyền)</option>
+                            <option value="Head" ${user.role==='Head'?'selected':''}>Head (Web + Giao diện)</option>
+                            <option value="Admin" ${user.role==='Admin'?'selected':''}>Admin (Web + Giao diện)</option>
+                            <option value="Moderator" ${user.role==='Moderator'?'selected':''}>Moderator (Chỉ tin tức)</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            document.getElementById('modal-save-btn').onclick = saveUser;
+            document.getElementById('form-modal')?.classList.remove('hidden');
+            document.getElementById('form-modal')?.classList.add('flex');
+        }
+
+        function saveUser() {
+            const username = document.getElementById('usr-username').value.trim();
+            const password = document.getElementById('usr-password').value.trim();
+            let role = document.getElementById('usr-role').value;
+            const name = document.getElementById('usr-name').value.trim();
+
+            if(!username || !password) return alert('Nhập đủ thông tin!');
+            const users = getData('users');
+            if (currentEditingId && users.find(u => u.id === currentEditingId).username === 'hethong.quanly') role = 'Owner'; 
+            else if (users.find(u => u.username === username && u.id !== currentEditingId)) return alert('Tên đăng nhập đã tồn tại!');
+
+            const newUser = { id: currentEditingId || 'usr_'+Date.now(), username, password, role, name };
+            if(currentEditingId) {
+                users[users.findIndex(u=>u.id===currentEditingId)] = newUser;
+            } else {
+                users.push(newUser);
+            }
+            saveData('users', users); closeModal(); renderUsers(); showToast('Đã lưu tài khoản!');
+        }
+
+        function deleteUser(id) {
+            const users = getData('users');
+            const targetUser = users.find(u => u.id === id);
+            if (targetUser.username === 'hethong.quanly') return;
+            if(confirm(`Xoá tài khoản này?`)){ 
+                saveData('users', users.filter(u=>u.id!==id)); 
+                renderUsers(); 
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('form-modal')?.classList.add('hidden');
+            document.getElementById('form-modal')?.classList.remove('flex');
+            currentEditingId = null;
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = `toast bg-white border border-slate-200 text-slate-800 px-5 py-3 shadow-xl rounded-xl font-medium flex items-center gap-3`;
+            t.innerHTML = `<div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center"><i class="fa-solid fa-check"></i></div> <span class="text-sm">${msg}</span>`; 
+            document.getElementById('toast-container')?.appendChild(t);
+            setTimeout(() => t.remove(), 2500);
+        }
+
+        // --- UPLOAD LOGIC ---
+        function setupDropZone(key) {
+            const dropZone = document.getElementById('dropzone-' + key);
+            const fileInput = document.getElementById('file-' + key);
+            if(!dropZone || !fileInput) return;
+
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-brandBlue', 'bg-blue-50/50'); });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('border-brandBlue', 'bg-blue-50/50'); });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault(); dropZone.classList.remove('border-brandBlue', 'bg-blue-50/50');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) processImageFile(key, e.dataTransfer.files[0]);
+            });
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files[0]) processImageFile(key, e.target.files[0]);
+            });
+        }
+
+        function processImageFile(key, file) {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                compressImage(e.target.result, 800, function(compressedBase64) {
+                    updateImageUI(key, compressedBase64);
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function compressImage(base64Str, maxWidth, callback) {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width, height = img.height;
+                if (width > maxWidth) { height = Math.round(height * (maxWidth / width)); width = maxWidth; }
+                canvas.width = width; canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                callback(canvas.toDataURL('image/jpeg', 0.6)); 
+            };
+            img.src = base64Str;
+        }
+
+        function updateImageUI(key, src) {
+            const inputEl = document.getElementById('info-' + key);
+            if(inputEl) inputEl.value = src;
+            
+            const artImgEl = document.getElementById('art-img');
+            if(key === 'art' && artImgEl) artImgEl.value = src;
+            
+            const vidImgEl = document.getElementById('vid-img');
+            if(key === 'vid' && vidImgEl) vidImgEl.value = src;
+            
+            const sidebarImgEl = document.getElementById('info-sidebar-img');
+            if(key === 'sidebar' && sidebarImgEl) sidebarImgEl.value = src;
+            
+            const logoImgEl = document.getElementById('info-logo');
+            if(key === 'logo' && logoImgEl) logoImgEl.value = src;
+            
+            const previewContainer = document.getElementById('preview-container-' + key);
+            const previewImg = document.getElementById('preview-img-' + key);
+            const placeholder = document.getElementById('placeholder-' + key);
+            
+            if (previewContainer && previewImg && placeholder) {
+                if (src && src.trim() !== '') {
+                    previewImg.src = src; 
+                    previewContainer.classList.remove('hidden'); 
+                    placeholder.classList.add('hidden');
+                } else {
+                    previewContainer.classList.add('hidden'); 
+                    placeholder.classList.remove('hidden');
+                }
+            }
+        }
+
+        function setupGalleryDropZone() {
+            const dropZone = document.getElementById('dropzone-gallery');
+            const fileInput = document.getElementById('file-gallery');
+            if(!dropZone || !fileInput) return;
+
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-brandBlue', 'bg-blue-50/50'); });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('border-brandBlue', 'bg-blue-50/50'); });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault(); dropZone.classList.remove('border-brandBlue', 'bg-blue-50/50');
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    Array.from(e.dataTransfer.files).forEach(file => processGalleryFile(file));
+                }
+            });
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files && e.target.files.length > 0) Array.from(e.target.files).forEach(file => processGalleryFile(file));
+            });
+        }
+
+        function processGalleryFile(file) {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                compressImage(e.target.result, 600, function(compressedBase64) {
+                    currentGallery.push(compressedBase64);
+                    renderGalleryPreview();
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderGalleryPreview() {
+            const wrapper = document.getElementById('gallery-preview-wrapper');
+            if(!wrapper) return;
+            if (currentGallery.length === 0) { wrapper.innerHTML = ``; return; }
+            wrapper.innerHTML = currentGallery.map((src, idx) => `
+                <div class="relative group w-16 h-16 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                    <img src="${src}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center cursor-pointer transition" onclick="removeGalleryImage(${idx}, event)">
+                        <i class="fa-solid fa-trash text-white text-xs"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeGalleryImage(index, event) {
+            if(event) event.stopPropagation(); 
+            currentGallery.splice(index, 1);
+            renderGalleryPreview();
+        }
+
+        // --- D. INIT ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initStorage();
+            
+            if (!sessionStorage.getItem('visited_front')) {
+                let visitsData = getData('visits');
+                visitsData.total += 1;
+                const tDay = getToday();
+                visitsData.daily[tDay] = (visitsData.daily[tDay] || 0) + 1; 
+                saveData('visits', visitsData);
+                sessionStorage.setItem('visited_front', 'true');
+            }
+
+            syncDataToFrontend();
+            renderFrontHome();
+
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                const user = JSON.parse(sessionStorage.getItem('loggedInUser'));
+                if (!user) { sessionStorage.removeItem('isLoggedIn'); return; }
+                
+                document.getElementById('frontend-wrapper')?.classList.add('hidden');
+                document.getElementById('admin-container')?.classList.remove('hidden');
+                
+                const userNameEl = document.getElementById('admin-user-name-display');
+                const userRoleEl = document.getElementById('admin-user-role-display');
+                if(userNameEl) userNameEl.innerText = user.name;
+                if(userRoleEl) {
+                    let rStr = 'Biên tập viên';
+                    if(user.role === 'Owner') rStr = 'Chủ sở hữu (Super Admin)';
+                    if(user.role === 'Admin') rStr = 'Quản trị viên';
+                    if(user.role === 'Head') rStr = 'Ban Giám Hiệu';
+                    userRoleEl.innerText = rStr;
+                }
+
+                const menuUsers = document.getElementById('menu-users');
+                if(menuUsers) user.role === 'Owner' ? menuUsers.classList.remove('hidden') : menuUsers.classList.add('hidden');
+                if(menuUsers && user.role==='Owner') menuUsers.classList.add('flex');
+
+                const menuInfo = document.getElementById('menu-info');
+                const menuCategories = document.getElementById('menu-categories');
+                if (user.role !== 'Moderator') {
+                    if(menuInfo) { menuInfo.classList.remove('hidden'); menuInfo.classList.add('flex'); }
+                    if(menuCategories) { menuCategories.classList.remove('hidden'); menuCategories.classList.add('flex'); }
+                }
+
+                renderDashboard();
+            }
+        });
+
+    </script>
+</body>
+</html>
